@@ -16,7 +16,7 @@ int funcClamp(int _min, int _max, int _input) {
     }
 }
 
-void applyGaussianFilter(const std::vector<std::vector<int>>& _input, std::vector<std::vector<int>>* _output) {
+void applyGaussianFilter(const std::vector<std::vector<int>>& _input, std::vector<std::vector<int>> _output) {
     float kernel[3][3] = {
         {0.0625, 0.125, 0.0625},
         {0.125, 0.25, 0.125},
