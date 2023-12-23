@@ -16,6 +16,12 @@ std::vector<double> funcSystemSolveSeidelMPI(const std::vector<std::vector<doubl
 
     int k = 0;
 
+    int block_size = _numRows / size;
+    int remaining_rows = _numRows % size;
+
+    int start_row = _rank * block_size + std::min(_rank, remaining_rows);
+    int end_row = start_row + block_size + (_rank < remaining_rows ? 1 : 0);
+
     std::vector<double> x(_numRows, 0.0);
     std::vector<double> xNew(_numRows, 0.0);
 
@@ -26,7 +32,7 @@ std::vector<double> funcSystemSolveSeidelMPI(const std::vector<std::vector<doubl
             // having this many cycle repetitions means there are no roots for this system
             return std::vector<double>(_numRows, 0.0);
         }
-        for (int i = 0; i < _numRows; ++i) {
+        for (int i = start_row; i < end_row; ++i) {
             double sum1 = 0.0, sum2 = 0.0;
             for (int j = 0; j < i; ++j) {
                 sum1 += _mtxA[i][j] * xNew[j];
@@ -36,6 +42,9 @@ std::vector<double> funcSystemSolveSeidelMPI(const std::vector<std::vector<doubl
             }
             xNew[i] = (_vectorB[i] - sum1 - sum2) / _mtxA[i][i];
         }
+
+        MPI_Allgatherv(&xNew[start_row], end_row - start_row, MPI_DOUBLE, &xNew[0],
+            &block_size, &start_row, MPI_DOUBLE, MPI_COMM_WORLD);
 
         double local_max_diff = 0.0;
         for (int i = 0; i < _numRows; ++i) {
