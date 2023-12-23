@@ -33,7 +33,7 @@ std::vector<double> funcSystemSolveSeidelMPI(const std::vector<std::vector<doubl
     bool converged = false;
     while (!converged) {
         k++;
-        if (k > 100000) {
+        if (k > 100) {
             // having this many cycle repetitions means there are no roots for this system
             return std::vector<double>(_numRows, 0.0);
         }
