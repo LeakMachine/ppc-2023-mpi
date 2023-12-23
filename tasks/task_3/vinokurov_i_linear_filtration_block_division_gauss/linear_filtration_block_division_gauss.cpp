@@ -9,16 +9,14 @@
 int funcClamp(int _min, int _max, int _input) {
     if (_input < _min) {
         return 0;
-    }
-    else if (_input > _max) {
+    } else if (_input > _max) {
         return _max;
-    }
-    else {
+    } else {
         return _input;
     }
 }
 
-void applyGaussianFilter(const std::vector<std::vector<int>>& _input, std::vector<std::vector<int>>& _output) {
+void applyGaussianFilter(const std::vector<std::vector<int>>& _input, std::vector<std::vector<int>>* _output) {
     float kernel[3][3] = {
         {0.0625, 0.125, 0.0625},
         {0.125, 0.25, 0.125},
@@ -36,7 +34,7 @@ void applyGaussianFilter(const std::vector<std::vector<int>>& _input, std::vecto
                     sum += _input[i + k][j + l] * kernel[k + 1][l + 1];
                 }
             }
-            _output[i][j] = funcClamp(0, 255, (int)(sum));
+            _output[i][j] = funcClamp(0, 255, static_cast<int>(sum));
         }
     }
 }
@@ -60,8 +58,7 @@ std::vector<std::vector<int>> applyFilterMPI(const std::vector<std::vector<int>>
 
     if (rank != 0) {
         MPI_Send(&tempImage[blockStart - 1][0], (blockRows + 2) * cols, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
-    else {
+    } else {
         for (int i = 1; i < size; ++i) {
             MPI_Recv(&localImage[0][0], (blockRows + 2) * cols, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             applyGaussianFilter(localImage, localOutput);
@@ -71,15 +68,13 @@ std::vector<std::vector<int>> applyFilterMPI(const std::vector<std::vector<int>>
 
     if (rank == 0) {
         applyGaussianFilter(tempImage, localOutput);
-    }
-    else {
+    } else {
         MPI_Recv(&localOutput[0][0], blockRows * cols, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     if (rank != 0) {
         MPI_Send(&localOutput[0][0], blockRows * cols, MPI_INT, 0, 1, MPI_COMM_WORLD);
-    }
-    else {
+    } else {
         for (int i = 1; i < size; ++i) {
             MPI_Recv(&tempImage[i * blockRows][0], blockRows * cols, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
