@@ -16,16 +16,16 @@ std::vector<double> funcSystemSolveSeidelMPI(const std::vector<std::vector<doubl
 
     int k = 0;
 
-    int block_size = _numRows / size;
-    int remaining_rows = _numRows % size;
+    int blockSize = _numRows / size;
+    int remainingRows = _numRows % size;
 
-    int start_row = _rank * block_size + std::min(_rank, remaining_rows);
-    int end_row = start_row + block_size + (_rank < remaining_rows ? 1 : 0);
+    int startRow = _rank * blockSize + std::min(_rank, remainingRows);
+    int endRow = startRow + blockSize + (_rank < remainingRows ? 1 : 0);
 
-    int local_row_count = end_row - start_row;
+    int localRowCount = endRow - startRow;
 
-    int total_row_count;
-    MPI_Allreduce(&local_row_count, &total_row_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    int totalRowCount;
+    MPI_Allreduce(&localRowCount, &totalRowCount, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     std::vector<double> x(_numRows, 0.0);
     std::vector<double> xNew(_numRows, 0.0);
@@ -37,7 +37,7 @@ std::vector<double> funcSystemSolveSeidelMPI(const std::vector<std::vector<doubl
             // having this many cycle repetitions means there are no roots for this system
             return std::vector<double>(_numRows, 0.0);
         }
-        for (int i = start_row; i < end_row; ++i) {
+        for (int i = startRow; i < endRow; ++i) {
             double sum1 = 0.0, sum2 = 0.0;
             for (int j = 0; j < i; ++j) {
                 sum1 += _mtxA[i][j] * xNew[j];
@@ -48,20 +48,20 @@ std::vector<double> funcSystemSolveSeidelMPI(const std::vector<std::vector<doubl
             xNew[i] = (_vectorB[i] - sum1 - sum2) / _mtxA[i][i];
         }
 
-        MPI_Allgather(&xNew[start_row], local_row_count, MPI_DOUBLE,
-            &xNew[0], local_row_count, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Allgather(&xNew[startRow], localRowCount, MPI_DOUBLE,
+            &xNew[0], localRowCount, MPI_DOUBLE, MPI_COMM_WORLD);
 
-        double local_max_diff = 0.0;
+        double localMaxDiff = 0.0;
         for (int i = 0; i < _numRows; ++i) {
             double diff = std::abs(xNew[i] - x[i]);
-            if (diff > local_max_diff) {
-                local_max_diff = diff;
+            if (diff > localMaxDiff) {
+                localMaxDiff = diff;
             }
         }
 
-        double global_max_diff;
-        MPI_Allreduce(&local_max_diff, &global_max_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        if (global_max_diff < _eps) {
+        double globalMaxDiff;
+        MPI_Allreduce(&localMaxDiff, &globalMaxDiff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        if (globalMaxDiff < _eps) {
             converged = true;
         }
 
