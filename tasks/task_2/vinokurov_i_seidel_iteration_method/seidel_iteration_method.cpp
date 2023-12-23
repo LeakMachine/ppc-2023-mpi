@@ -43,7 +43,7 @@ std::vector<double> funcSystemSolveSeidelMPI(const std::vector<std::vector<doubl
             xNew[i] = (_vectorB[i] - sum1 - sum2) / _mtxA[i][i];
         }
 
-        MPI_Allgatherv(&xNew[start_row], end_row - start_row, MPI_DOUBLE, &xNew[0],
+        MPI_Allgatherv(&xNew[start_row], end_row - start_row - 1, MPI_DOUBLE, &xNew[0],
             &block_size, &start_row, MPI_DOUBLE, MPI_COMM_WORLD);
 
         double local_max_diff = 0.0;
