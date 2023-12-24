@@ -16,7 +16,7 @@ int funcClamp(int _input, int _min, int _max) {
     }
 }
 
-float kernel[3][3] = {
+const float kernel[3][3] = {
     {1.0f / 16, 2.0f / 16, 1.0f / 16},
     {2.0f / 16, 4.0f / 16, 2.0f / 16},
     {1.0f / 16, 2.0f / 16, 1.0f / 16}
@@ -31,50 +31,13 @@ unsigned char funcProcessPixelFlat(int _x, int _y, const std::vector<unsigned ch
 
     for (int l = -radiusY; l <= radiusY; l++) {
         for (int k = -radiusX; k <= radiusX; k++) {
-            int idX = _x + k;
-            int idY = _y + l;
-            idX = (idX < 0) ? 0 : ((idX >= cols) ? cols - 1 : idX);
-            idY = (idY < 0) ? 0 : ((idY >= cols) ? cols - 1 : idY);
+            int idX = funcClamp(_x + k, 0, cols - 1);
+            int idY = funcClamp(_y + l, 0, cols - 1);
             neighborColor = flattenImage[idX * cols + idY];
             result += neighborColor * kernel[k + radiusX][l + radiusY];
         }
     }
     return static_cast<unsigned char>(result);
-}
-
-unsigned char funcProcessPixel(int _x, int _y, const std::vector<std::vector<unsigned char>>& _image) {
-    int radiusX = 1;
-    int radiusY = 1;
-    float result = 0;
-
-    int rows = _image.size();
-    int cols = _image[0].size();
-    unsigned char neighborColor;
-
-    for (int l = -radiusY; l <= radiusY; l++) {
-        for (int k = -radiusX; k <= radiusX; k++) {
-            int idX = funcClamp(_x + k, 0, rows - 1);
-            int idY = funcClamp(_y + l, 0, cols - 1);
-            neighborColor = _image[idX][idY];
-            result += neighborColor * kernel[k + radiusX][l + radiusY];
-        }
-    }
-    return static_cast<unsigned char>(result);
-}
-
-std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vector<unsigned char>>& _image) {
-    int rows = _image.size();
-    int cols = _image[0].size();
-
-    std::vector<std::vector<unsigned char>> temp(rows, std::vector<unsigned char>(cols));
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            temp[i][j] = funcProcessPixel(i + 1, j + 1, _image);
-        }
-    }
-
-    return std::vector<std::vector<unsigned char>>(temp);
 }
 
 std::vector<unsigned char> convertTo1D(const std::vector<std::vector<unsigned char>>& image) {
@@ -86,12 +49,29 @@ std::vector<unsigned char> convertTo1D(const std::vector<std::vector<unsigned ch
 }
 
 std::vector<std::vector<unsigned char>> convertTo2D(const std::vector<unsigned char>& flattenedImage,
-                                        int rows, int cols) {
+    int rows, int cols) {
     std::vector<std::vector<unsigned char>> image;
     for (int i = 0; i < rows; ++i) {
         image.emplace_back(flattenedImage.begin() + i * cols, flattenedImage.begin() + (i + 1) * cols);
     }
     return image;
+}
+
+std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vector<unsigned char>>& _image) {
+    int rows = _image.size();
+    int cols = _image[0].size();
+
+    std::vector<unsigned char> flattenedImage = convertTo1D(_image);
+
+    std::vector<unsigned char> temp(flattenedImage.size());
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            temp[i * cols + j] = funcProcessPixelFlat(i, j, flattenedImage, cols);
+        }
+    }
+
+    return convertTo2D(temp, rows, cols);
 }
 
 std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& image) {
@@ -108,23 +88,18 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
 
     std::vector<unsigned char> flattenedImage = convertTo1D(image);
 
-    int block_size = rows / size;
+    int blockSize = rows / size;
+    int blockStart = rank * blockSize;
+    int blockEnd = (rank == size - 1) ? rows : blockStart + blockSize;
 
-    if (block_size == 0) {
-        throw std::runtime_error("Cannot work with wrong parameters");
-    }
-
-    int block_start = rank * block_size;
-    int block_end = (rank == size - 1) ? rows : block_start + block_size;
-
-    std::vector<unsigned char> localFlattenedImage(flattenedImage.begin() + block_start * cols,
-        flattenedImage.begin() + block_end * cols);
+    std::vector<unsigned char> localFlattenedImage(flattenedImage.begin() + blockStart * cols,
+        flattenedImage.begin() + blockEnd * cols);
 
     std::vector<unsigned char> localResult(localFlattenedImage.size());
 
-    for (int i = 0; i < block_size; ++i) {
+    for (int i = 0; i < blockSize; ++i) {
         for (int j = 0; j < cols; ++j) {
-            int x = block_start + i;
+            int x = blockStart + i;
             int y = j;
 
             localResult[i * cols + j] = funcProcessPixelFlat(x, y, flattenedImage, cols);

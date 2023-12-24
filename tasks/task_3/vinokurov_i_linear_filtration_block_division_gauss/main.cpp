@@ -39,24 +39,24 @@ TEST(TESTS, CanWork4x4Test) {
 
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_NEAR(result[i][j], result2[i][j], 15);
+            EXPECT_EQ(result[i][j], result2[i][j], 0);
         }
     }
 }
 
-TEST(TESTS, CanWork8x8Test) {
+TEST(TESTS, CanWork8x10Test) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110, 100, 120, 130, 110},
-        {110, 115, 120, 125, 110, 115, 120, 125},
-        {90, 100, 110,  120, 95, 105, 115, 125},
-        {95, 105, 115, 125, 110, 115, 120, 125},
-        {100, 120, 130, 110, 110, 115, 120, 125},
-        {110, 115, 120, 125, 110, 115, 120, 125},
-        {90, 100, 110, 120, 100, 120, 130, 110},
-        {95, 105, 115, 125, 110, 115, 120, 125}
+        {150, 145, 140, 135, 130, 125, 120, 115, 110, 105},
+        {145, 140, 135, 130, 125, 120, 115, 110, 105, 100},
+        {140, 135, 130, 125, 120, 115, 110, 105, 100, 95},
+        {135, 130, 125, 120, 115, 110, 105, 100, 95, 90},
+        {130, 125, 120, 115, 110, 105, 100, 95, 90, 85},
+        {125, 120, 115, 110, 105, 100, 95, 90, 85, 80},
+        {120, 115, 110, 105, 100, 95, 90, 85, 80, 75},
+        {115, 110, 105, 100, 95, 90, 85, 80, 75, 70}
     };
 
     std::vector<std::vector<unsigned char>> result;
@@ -67,24 +67,24 @@ TEST(TESTS, CanWork8x8Test) {
 
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_NEAR(result[i][j], result2[i][j], 15);
+            EXPECT_EQ(result[i][j], result2[i][j], 0);
         }
     }
 }
 
-TEST(TESTS, CanWork8x12Test) {
+TEST(TESTS, CanWork8x4Test) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110, 100, 120, 130, 110, 110, 115, 120, 125},
-        {110, 115, 120, 125, 110, 115, 120, 125, 100, 120, 130, 110},
-        {90, 100, 110,  120, 95, 105, 115, 125, 90, 100, 110,  120},
-        {95, 105, 115, 125, 110, 115, 120, 125, 100, 110, 120, 100},
-        {100, 120, 130, 110, 110, 115, 120, 125, 100, 120, 130, 110},
-        {110, 115, 120, 125, 110, 115, 120, 125, 115, 125, 110, 115},
-        {90, 100, 110, 120, 100, 120, 130, 110, 100, 120, 130, 110},
-        {95, 105, 115, 125, 110, 115, 120, 125, 115, 125, 110, 115}
+        {150, 145, 140, 135},
+        {145, 140, 135, 130},
+        {140, 135, 130, 125},
+        {135, 130, 125, 120},
+        {130, 125, 120, 115},
+        {125, 120, 115, 110},
+        {120, 115, 110, 105},
+        {115, 110, 105, 100}
     };
 
     std::vector<std::vector<unsigned char>> result;
@@ -95,7 +95,55 @@ TEST(TESTS, CanWork8x12Test) {
 
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_NEAR(result[i][j], result2[i][j], 15);
+            EXPECT_EQ(result[i][j], result2[i][j], 0);
+        }
+    }
+}
+
+TEST(TESTS, CanWorkPitchBlackTest) {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    std::vector<std::vector<unsigned char>> image = {
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}
+    };
+
+    std::vector<std::vector<unsigned char>> result;
+    std::vector<std::vector<unsigned char>> result2;
+
+    result = applyFilter(image);
+    result2 = applyFilterMPI(image);
+
+    for (int i = 0; i < image.size(); i++) {
+        for (int j = 0; j < image[0].size(); j++) {
+            EXPECT_EQ(result[i][j], result2[i][j], 0);
+        }
+    }
+}
+
+TEST(TESTS, CanWorkWhiteTest) {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    std::vector<std::vector<unsigned char>> image = {
+        {255, 255, 255, 255},
+        {255, 255, 255, 255},
+        {255, 255, 255, 255},
+        {255, 255, 255, 255}
+    };
+
+    std::vector<std::vector<unsigned char>> result;
+    std::vector<std::vector<unsigned char>> result2;
+
+    result = applyFilter(image);
+    result2 = applyFilterMPI(image);
+
+    for (int i = 0; i < image.size(); i++) {
+        for (int j = 0; j < image[0].size(); j++) {
+            EXPECT_EQ(result[i][j], result2[i][j], 0);
         }
     }
 }
@@ -105,19 +153,6 @@ TEST(TESTS, CannotWorkWithEmptyTest) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image;
-
-    std::vector<std::vector<unsigned char>> result;
-
-    ASSERT_ANY_THROW(result = applyFilterMPI(image));
-}
-
-TEST(TESTS, CannotWorkInWrongFormatTest) {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    std::vector<std::vector<unsigned char>> image = {
-        {100}
-    };
 
     std::vector<std::vector<unsigned char>> result;
 
