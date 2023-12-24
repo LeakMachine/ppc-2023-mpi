@@ -77,7 +77,7 @@ std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vecto
     return std::vector<std::vector<unsigned char>>(temp);
 }
 
-std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vector<unsigned char>>& _image) {
+std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& _image) {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
