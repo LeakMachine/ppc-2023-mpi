@@ -118,7 +118,7 @@ std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vecto
 
     if (rank == 0) {
         for (int src = 1; src < size; ++src) {
-            MPI_Recv(&finalOutput[src * blockRows][0], blockRows * cols, 
+            MPI_Recv(&finalOutput[src * blockRows][0], blockRows * cols,
                       MPI_UNSIGNED_CHAR, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
         finalOutput = localOutput;
