@@ -23,7 +23,6 @@ float kernel[3][3] = {
 };
 
 unsigned char funcProcessPixel(int _x, int _y, const std::vector<std::vector<unsigned char>>& _image) {
-
     int radiusX = 1;
     int radiusY = 1;
     float result = 0;
@@ -32,10 +31,8 @@ unsigned char funcProcessPixel(int _x, int _y, const std::vector<std::vector<uns
     int cols = _image[0].size();
     unsigned char neighborColor;
 
-    for (int l = -radiusY; l <= radiusY; l++)
-    {
-        for (int k = -radiusX; k <= radiusX; k++)
-        {
+    for (int l = -radiusY; l <= radiusY; l++) {
+        for (int k = -radiusX; k <= radiusX; k++) {
             int idX = funcClamp(_x + k, 0, rows - 1);
             int idY = funcClamp(_y + l, 0, cols - 1);
             neighborColor = _image[idX][idY];
@@ -46,7 +43,6 @@ unsigned char funcProcessPixel(int _x, int _y, const std::vector<std::vector<uns
 }
 
 std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vector<unsigned char>>& _image) {
-
     int rows = _image.size();
     int cols = _image[0].size();
 
