@@ -99,14 +99,14 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    if (image.empty()) {
+        throw std::runtime_error("Cannot work with an empty image");
+    }
+
     int rows = image.size();
     int cols = image[0].size();
 
     std::vector<unsigned char> flattenedImage = convertTo1D(image);
-
-    if (image.empty()) {
-        throw std::runtime_error("Cannot work with an empty image");
-    }
 
     int block_size = rows / size;
 
