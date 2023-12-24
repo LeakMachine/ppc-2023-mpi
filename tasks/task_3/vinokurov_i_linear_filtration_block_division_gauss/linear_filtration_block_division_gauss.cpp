@@ -107,8 +107,6 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
     std::vector<unsigned char> all_pixels(rows * cols);
     MPI_Gatherv(&flattenLocalOutput[0], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR,
         &all_pixels[0], sendcounts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
-    //MPI_Allgather(&flattenLocalOutput[0], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR,
-    //    &all_pixels[cols * blockStart], rows * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
     auto itr = all_pixels.begin();
     for (int i = 0; i < rows; ++i) {
