@@ -118,7 +118,7 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
             int x = block_start + i;
             int y = j;
 
-            localResult[i * cols + j] = funcProcessPixelFlat(x, y, localFlattenedImage, cols);
+            localResult[i * cols + j] = funcProcessPixelFlat(x, y, flattenedImage, cols);
         }
     }
 
