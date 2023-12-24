@@ -57,7 +57,7 @@ std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vecto
     return std::vector<std::vector<unsigned char>>(temp);
 }
 
-std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& _image) {
+std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vector<unsigned char>>& _image) {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -70,14 +70,11 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
     std::vector<std::vector<unsigned char>> localOutput(blockRows, std::vector<unsigned char>(cols));
     std::vector<std::vector<unsigned char>> finalOutput(rows, std::vector<unsigned char>(cols));
 
-    if (rank == 0) {
-        for (int i = 1; i < size; ++i) {
-            MPI_Send(&_image[i * blockRows][0], blockRows * cols, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD);
-        }
-        localImage = std::vector<std::vector<unsigned char>>(_image.begin(), _image.begin() + blockRows);
-    } else {
-        MPI_Recv(&localImage[0][0], blockRows * cols, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
+    std::vector<int> sendcounts(size, blockRows * cols);
+    std::vector<int> displs(size, 0);
+
+    MPI_Scatter(&_image[0][0], blockRows * cols, MPI_UNSIGNED_CHAR,
+        &localImage[0][0], blockRows * cols, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
     for (int i = 0; i < blockRows; ++i) {
         for (int j = 0; j < cols; ++j) {
@@ -85,17 +82,8 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
         }
     }
 
-    if (rank == 0) {
-        for (int i = 0; i < blockRows; ++i) {
-            finalOutput[i] = localOutput[i];
-        }
-        for (int i = 1; i < size; ++i) {
-            MPI_Recv(&finalOutput[i * blockRows][0], blockRows * cols,
-                      MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
-    } else {
-        MPI_Send(&localOutput[0][0], blockRows * cols, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
-    }
+    MPI_Gatherv(&localOutput[0][0], blockRows * cols, MPI_UNSIGNED_CHAR,
+        &finalOutput[0][0], sendcounts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
     return finalOutput;
 }
