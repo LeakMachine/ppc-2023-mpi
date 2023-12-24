@@ -88,9 +88,17 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
         return localOutput;
     }
 
-    std::vector<std::vector<unsigned char>> localOutput2(rows, std::vector<unsigned char>(cols));
+    std::vector<std::vector<unsigned char>> localOutputAll(size * (blockEnd - blockStart), std::vector<unsigned char>(cols));
     MPI_Allgather(&localOutput[0][0], (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR,
-        &localOutput2[0][0], (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
+        &localOutputAll[rank * (blockEnd - blockStart)][0], (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
-    return localOutput2;
+    std::vector<std::vector<unsigned char>> finalOutput(rows, std::vector<unsigned char>(cols));
+    for (int i = 0; i < size; ++i) {
+        int startIdx = i * (blockEnd - blockStart);
+        for (int j = 0; j < blockEnd - blockStart; ++j) {
+            finalOutput[startIdx + j] = localOutputAll[startIdx + j];
+        }
+    }
+
+    return finalOutput;
 }
