@@ -22,7 +22,7 @@ const float kernel[3][3] = {
     {1.0f / 16, 2.0f / 16, 1.0f / 16}
 };
 
-unsigned char funcProcessPixelFlat(int _x, int _y, const std::vector<unsigned char>& flattenImage, int cols) {
+unsigned char funcProcessPixelFlat(int _x, int _y, const std::vector<unsigned char>& _flattenImage, int _cols) {
     int radiusX = 1;
     int radiusY = 1;
     float result = 0;
@@ -31,28 +31,28 @@ unsigned char funcProcessPixelFlat(int _x, int _y, const std::vector<unsigned ch
 
     for (int l = -radiusY; l <= radiusY; l++) {
         for (int k = -radiusX; k <= radiusX; k++) {
-            int idX = funcClamp(_x + k, 0, cols - 1);
-            int idY = funcClamp(_y + l, 0, cols - 1);
-            neighborColor = flattenImage[idX * cols + idY];
+            int idX = funcClamp(_x + k, 0, _cols - 1);
+            int idY = funcClamp(_y + l, 0, _cols - 1);
+            neighborColor = _flattenImage[idX * _cols + idY];
             result += neighborColor * kernel[k + radiusX][l + radiusY];
         }
     }
     return static_cast<unsigned char>(result);
 }
 
-std::vector<unsigned char> convertTo1D(const std::vector<std::vector<unsigned char>>& image) {
+std::vector<unsigned char> convertTo1D(const std::vector<std::vector<unsigned char>>& _image) {
     std::vector<unsigned char> flattenedImage;
-    for (const auto& row : image) {
+    for (const auto& row : _image) {
         flattenedImage.insert(flattenedImage.end(), row.begin(), row.end());
     }
     return flattenedImage;
 }
 
-std::vector<std::vector<unsigned char>> convertTo2D(const std::vector<unsigned char>& flattenedImage,
-    int rows, int cols) {
+std::vector<std::vector<unsigned char>> convertTo2D(const std::vector<unsigned char>& _flattenedImage,
+    int _rows, int _cols) {
     std::vector<std::vector<unsigned char>> image;
-    for (int i = 0; i < rows; ++i) {
-        image.emplace_back(flattenedImage.begin() + i * cols, flattenedImage.begin() + (i + 1) * cols);
+    for (int i = 0; i < _rows; ++i) {
+        image.emplace_back(_flattenedImage.begin() + i * _cols, _flattenedImage.begin() + (i + 1) * _cols);
     }
     return image;
 }
@@ -74,19 +74,19 @@ std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vecto
     return convertTo2D(temp, rows, cols);
 }
 
-std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& image) {
+std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& _image) {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (image.empty()) {
+    if (_image.empty()) {
         throw std::runtime_error("Cannot work with an empty image");
     }
 
-    int rows = image.size();
-    int cols = image[0].size();
+    int rows = _image.size();
+    int cols = _image[0].size();
 
-    std::vector<unsigned char> flattenedImage = convertTo1D(image);
+    std::vector<unsigned char> flattenedImage = convertTo1D(_image);
 
     int blockSize = rows / size;
     int blockStart = rank * blockSize;
