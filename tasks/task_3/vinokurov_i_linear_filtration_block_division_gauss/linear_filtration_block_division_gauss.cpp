@@ -75,8 +75,7 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
             MPI_Send(&_image[i * blockRows][0], blockRows * cols, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD);
         }
         localImage = std::vector<std::vector<unsigned char>>(_image.begin(), _image.begin() + blockRows);
-    }
-    else {
+    } else {
         MPI_Recv(&localImage[0][0], blockRows * cols, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
@@ -93,8 +92,7 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
         for (int i = 1; i < size; ++i) {
             MPI_Recv(&finalOutput[i * blockRows][0], blockRows * cols, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
-    }
-    else {
+    } else {
         MPI_Send(&localOutput[0][0], blockRows * cols, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
     }
 
