@@ -6,7 +6,7 @@
 #include <cmath>
 #include "task_3/vinokurov_i_linear_filtration_block_division_gauss/linear_filtration_block_division_gauss.h"
 
-int funcClamp(int _max, int _min, int _input) {
+int funcClamp(int _input, int _min, int _max) {
     if (_input < _min) {
         return 0;
     } else if (_input > _max) {
@@ -58,23 +58,24 @@ std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vecto
 }
 
 std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& _image) {
-    int rank, size;
+    int rank, size, blockRows, blockStart, blockEnd;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     int rows = _image.size();
     int cols = _image[0].size();
 
-    int blockRows = rows / size;
-    int blockStart = rank * blockRows;
-    int blockEnd = (rank == size - 1) ? rows : blockStart + blockRows;
+    blockRows = rows / size;
+    blockStart = rank * blockRows;
+    blockEnd = (rank == size - 1) ? rows : blockStart + blockRows;
 
     std::vector<std::vector<unsigned char>> localImage(blockEnd - blockStart, std::vector<unsigned char>(cols));
     std::vector<std::vector<unsigned char>> localOutput(blockEnd - blockStart, std::vector<unsigned char>(cols));
+    std::vector<std::vector<unsigned char>> finalOutput(rows, std::vector<unsigned char>(cols));
 
-    for (int i = blockStart; i < blockEnd; i++) {
+    for (int i = 0; i < blockEnd - blockStart; i++) {
         for (int j = 0; j < cols; j++) {
-            localImage[i][j] = _image[i][j];
+            localImage[i][j] = _image[i + blockStart][j];
         }
     }
 
@@ -84,21 +85,19 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
         }
     }
 
-    if (rank == 0 && size == 1) {
-        return localOutput;
+    std::vector<unsigned char> flattenLocalOutput;
+    for (const auto& vec : localOutput) {
+        flattenLocalOutput.insert(flattenLocalOutput.end(), vec.begin(), vec.end());
     }
 
-    std::vector<std::vector<unsigned char>> localOutputAll(size * (blockEnd - blockStart),
-                                           std::vector<unsigned char>(cols));
-    MPI_Allgather(&localOutput[0][0], (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR,
-        &localOutputAll[rank * (blockEnd - blockStart)][0],
-        (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
+    std::vector<unsigned char> all_pixels(rows * cols);
+    MPI_Allgather(&flattenLocalOutput[0], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR,
+        &all_pixels[cols * blockStart], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
-    std::vector<std::vector<unsigned char>> finalOutput(rows, std::vector<unsigned char>(cols));
-    for (int i = 0; i < size; ++i) {
-        int startIdx = i * (blockEnd - blockStart);
-        for (int j = 0; j < blockEnd - blockStart; ++j) {
-            finalOutput[startIdx + j] = localOutputAll[startIdx + j];
+    auto itr = all_pixels.begin();
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            finalOutput[i][j] = *itr++;
         }
     }
 

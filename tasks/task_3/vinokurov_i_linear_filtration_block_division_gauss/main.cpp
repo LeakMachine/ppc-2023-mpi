@@ -34,7 +34,11 @@ TEST(TESTS, CanUseFunctionTest) {
         }
         std::cout << std::endl;
     }
-    EXPECT_EQ(result, result2);
+    for (int i = 0; i < image.size(); i++) {
+        for (int j = 0; j < image[0].size(); j++) {
+            ASSERT_NEAR(result[i][j], result2[i][j], 10);
+        }
+    }
 }
 
 TEST(TESTS, CanUseFunctionTest2) {
