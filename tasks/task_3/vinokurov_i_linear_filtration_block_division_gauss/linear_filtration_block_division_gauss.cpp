@@ -90,19 +90,15 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
         flattenLocalOutput.insert(flattenLocalOutput.end(), vec.begin(), vec.end());
     }
 
-    std::vector<int> sendcounts(size);
-    std::vector<int> displs(size);
+    int sendcounts;
+    int displs;
 
-    for (int i = 0; i < size - 1; ++i) {
-        sendcounts[i] = blockRows * cols;
-        displs[i] = i * blockRows * cols;
-    }
-    sendcounts[size - 1] = (rows - (size - 1) * blockRows) * cols;
-    displs[size - 1] = (size - 1) * blockRows * cols;
+    sendcounts = blockRows * cols;
+    displs = rank * blockRows * cols;
 
     std::vector<unsigned char> all_pixels(rows * cols);
     MPI_Gatherv(&flattenLocalOutput[0], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR,
-        &all_pixels[0], sendcounts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+        &all_pixels[0], &sendcounts, &displs, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
     auto itr = all_pixels.begin();
     for (int i = 0; i < rows; ++i) {
