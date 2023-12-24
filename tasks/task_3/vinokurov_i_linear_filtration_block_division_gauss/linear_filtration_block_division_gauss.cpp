@@ -77,6 +77,22 @@ std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vecto
     return std::vector<std::vector<unsigned char>>(temp);
 }
 
+std::vector<unsigned char> convertTo1D(const std::vector<std::vector<unsigned char>>& image) {
+    std::vector<unsigned char> flattenedImage;
+    for (const auto& row : image) {
+        flattenedImage.insert(flattenedImage.end(), row.begin(), row.end());
+    }
+    return flattenedImage;
+}
+
+std::vector<std::vector<unsigned char>> convertTo2D(const std::vector<unsigned char>& flattenedImage, int rows, int cols) {
+    std::vector<std::vector<unsigned char>> image;
+    for (int i = 0; i < rows; ++i) {
+        image.emplace_back(flattenedImage.begin() + i * cols, flattenedImage.begin() + (i + 1) * cols);
+    }
+    return image;
+}
+
 std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& image) {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -85,25 +101,29 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
     int rows = image.size();
     int cols = image[0].size();
 
+    std::vector<unsigned char> flattenedImage = convertTo1D(image);
+
     int block_size = rows / size;
     int block_start = rank * block_size;
     int block_end = (rank == size - 1) ? rows : block_start + block_size;
 
-    std::vector<std::vector<unsigned char>> localImage(image.begin() + block_start, image.begin() + block_end);
-    std::vector<std::vector<unsigned char>> localResult(localImage.size(), std::vector<unsigned char>(cols));
+    std::vector<unsigned char> localFlattenedImage(flattenedImage.begin() + block_start * cols,
+        flattenedImage.begin() + block_end * cols);
 
-    for (int i = 0; i < localImage.size(); ++i) {
+    std::vector<unsigned char> localResult(localFlattenedImage.size());
+
+    for (int i = 0; i < block_size; ++i) {
         for (int j = 0; j < cols; ++j) {
             int x = block_start + i;
             int y = j;
 
-            localResult[i][j] = funcProcessPixel(x, y, image);
+            localResult[i * cols + j] = funcProcessPixelFlat(x, y, localFlattenedImage, cols);
         }
     }
 
-    std::vector<std::vector<unsigned char>> gatheredResult(rows, std::vector<unsigned char>(cols));
-    MPI_Allgather(localResult.data(), localResult.size() * cols, MPI_UNSIGNED_CHAR,
-        gatheredResult.data(), localResult.size() * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
+    std::vector<unsigned char> gatheredResult(rows * cols);
+    MPI_Allgather(localResult.data(), localResult.size(), MPI_UNSIGNED_CHAR,
+        gatheredResult.data(), localResult.size(), MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
-    return gatheredResult;
+    return convertTo2D(gatheredResult, rows, cols);
 }
