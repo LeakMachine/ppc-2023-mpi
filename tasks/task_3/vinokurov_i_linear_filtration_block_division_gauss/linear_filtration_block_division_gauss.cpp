@@ -77,54 +77,33 @@ std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vecto
     return std::vector<std::vector<unsigned char>>(temp);
 }
 
-std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& _image) {
+std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& image) {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int rows = _image.size();
-    int cols = _image[0].size();
-    int blockRows = rows / size;
+    int rows = image.size();
+    int cols = image[0].size();
 
-    std::vector<std::vector<unsigned char>> localOutput(blockRows, std::vector<unsigned char>(cols));
-    std::vector<std::vector<unsigned char>> finalOutput(rows, std::vector<unsigned char>(cols));
+    int block_size = rows / size;
+    int block_start = rank * block_size;
+    int block_end = (rank == size - 1) ? rows : block_start + block_size;
 
-    if (rank == 0) {
-        std::vector<unsigned char> flattenImage;
-        flattenImage.reserve(rows * cols);
-        for (const auto& row : _image) {
-            flattenImage.insert(flattenImage.end(), row.begin(), row.end());
-        }
+    std::vector<std::vector<unsigned char>> localImage(image.begin() + block_start, image.begin() + block_end);
+    std::vector<std::vector<unsigned char>> localResult(localImage.size(), std::vector<unsigned char>(cols));
 
-        for (int dest = 1; dest < size; ++dest) {
-            MPI_Send(flattenImage.data(), rows * cols, MPI_UNSIGNED_CHAR, dest, 0, MPI_COMM_WORLD);
-        }
+    for (int i = 0; i < localImage.size(); ++i) {
+        for (int j = 0; j < cols; ++j) {
+            int x = block_start + i;
+            int y = j;
 
-        for (int i = 0; i < blockRows; ++i) {
-            for (int j = 0; j < cols; ++j) {
-                localOutput[i][j] = funcProcessPixelFlat(i, j, flattenImage, cols);
-            }
-        }
-    } else {
-        std::vector<unsigned char> recvBuffer(rows * cols);
-        MPI_Recv(recvBuffer.data(), rows * cols, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        for (int i = 0; i < blockRows; ++i) {
-            for (int j = 0; j < cols; ++j) {
-                localOutput[i][j] = funcProcessPixelFlat(i + rank * blockRows, j, recvBuffer, cols);
-            }
+            localResult[i][j] = funcProcessPixel(x, y, image);
         }
     }
 
-    if (rank == 0) {
-        for (int src = 1; src < size; ++src) {
-            MPI_Recv(&finalOutput[src * blockRows][0], blockRows * cols,
-                      MPI_UNSIGNED_CHAR, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
-        finalOutput = localOutput;
-    } else {
-        MPI_Send(&localOutput[0][0], blockRows * cols, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
-    }
+    std::vector<std::vector<unsigned char>> gatheredResult(rows, std::vector<unsigned char>(cols));
+    MPI_Allgather(localResult.data(), localResult.size() * cols, MPI_UNSIGNED_CHAR,
+        gatheredResult.data(), localResult.size() * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
-    return finalOutput;
+    return gatheredResult;
 }
