@@ -88,10 +88,10 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
         return localOutput;
     }
 
-    std::vector<std::vector<unsigned char>> localOutputAll(size * (blockEnd - blockStart), 
+    std::vector<std::vector<unsigned char>> localOutputAll(size * (blockEnd - blockStart),
                                            std::vector<unsigned char>(cols));
     MPI_Allgather(&localOutput[0][0], (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR,
-        &localOutputAll[rank * (blockEnd - blockStart)][0], 
+        &localOutputAll[rank * (blockEnd - blockStart)][0],
         (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
     std::vector<std::vector<unsigned char>> finalOutput(rows, std::vector<unsigned char>(cols));
