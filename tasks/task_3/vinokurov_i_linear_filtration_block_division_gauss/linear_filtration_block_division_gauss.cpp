@@ -90,9 +90,25 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
         flattenLocalOutput.insert(flattenLocalOutput.end(), vec.begin(), vec.end());
     }
 
+    std::vector<int> sendcounts(size); 
+    std::vector<int> displs(size);    
+
+    for (int i = 0; i < size - 1; ++i) {
+        sendcounts[i] = blockRows * cols;
+    }
+    sendcounts[size - 1] = (rows - blockRows * (size - 1)) * cols;
+
+    int displacement = 0;
+    for (int i = 0; i < size; ++i) {
+        displs[i] = displacement;
+        displacement += sendcounts[i];
+    }
+
     std::vector<unsigned char> all_pixels(rows * cols);
-    MPI_Allgather(&flattenLocalOutput[0], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR,
-        &all_pixels[cols * blockStart], rows * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
+    MPI_Gatherv(&flattenLocalOutput[0], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR,
+        &all_pixels[0], sendcounts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+    //MPI_Allgather(&flattenLocalOutput[0], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR,
+    //    &all_pixels[cols * blockStart], rows * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
     auto itr = all_pixels.begin();
     for (int i = 0; i < rows; ++i) {

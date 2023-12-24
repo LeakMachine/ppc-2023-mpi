@@ -9,11 +9,11 @@ TEST(TESTS, CanUseFunctionTest) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125},
-        {120, 130, 140, 150}
+        {100, 120, 130, 110, 120},
+        {110, 115, 120, 125, 105},
+        {90, 100, 110, 120, 130},
+        {95, 105, 115, 125, 135},
+        {120, 130, 140, 150, 110}
     };
 
     std::vector<std::vector<unsigned char>> result;
@@ -36,7 +36,7 @@ TEST(TESTS, CanUseFunctionTest) {
     }
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_NEAR(result[i][j], result2[i][j], 15);
+            ASSERT_NEAR(result[i][j], result2[i][j], 10);
         }
     }
 }
@@ -46,11 +46,11 @@ TEST(TESTS, CanUseFunctionTest2) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125},
-        {120, 130, 140, 150}
+        {100, 120, 130, 110, 120},
+        {110, 115, 120, 125, 105},
+        {90, 100, 110, 120, 130},
+        {95, 105, 115, 125, 135},
+        {120, 130, 140, 150, 110}
     };
 
     std::vector<std::vector<unsigned char>> result;
@@ -63,11 +63,11 @@ TEST(TESTS, CanUseFunctionTest3) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125},
-        {120, 130, 140, 150}
+        {100, 120, 130, 110, 120},
+        {110, 115, 120, 125, 105},
+        {90, 100, 110, 120, 130},
+        {95, 105, 115, 125, 135},
+        {120, 130, 140, 150, 110}
     };
 
     std::vector<std::vector<unsigned char>> result;
@@ -80,11 +80,11 @@ TEST(TESTS, CanUseFunctionTest4) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125},
-        {120, 130, 140, 150}
+        {100, 120, 130, 110, 120},
+        {110, 115, 120, 125, 105},
+        {90, 100, 110, 120, 130},
+        {95, 105, 115, 125, 135},
+        {120, 130, 140, 150, 110}
     };
 
     std::vector<std::vector<unsigned char>> result;
@@ -97,11 +97,11 @@ TEST(TESTS, CanUseFunctionTest5) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125},
-        {120, 130, 140, 150}
+        {100, 120, 130, 110, 120},
+        {110, 115, 120, 125, 105},
+        {90, 100, 110, 120, 130},
+        {95, 105, 115, 125, 135},
+        {120, 130, 140, 150, 110}
     };
 
     std::vector<std::vector<unsigned char>> result;
