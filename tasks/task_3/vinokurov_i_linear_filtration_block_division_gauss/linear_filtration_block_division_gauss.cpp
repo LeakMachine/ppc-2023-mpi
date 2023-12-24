@@ -59,8 +59,8 @@ std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vecto
 
 std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& _image) {
     int rank, size, blockRows, blockStart, blockEnd;
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     int rows = _image.size();
     int cols = _image[0].size();
