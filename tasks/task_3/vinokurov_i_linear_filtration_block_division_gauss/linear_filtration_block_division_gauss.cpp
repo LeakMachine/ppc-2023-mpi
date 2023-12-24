@@ -90,8 +90,8 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
         flattenLocalOutput.insert(flattenLocalOutput.end(), vec.begin(), vec.end());
     }
 
-    std::vector<int> sendcounts(size); 
-    std::vector<int> displs(size);    
+    std::vector<int> sendcounts(size);
+    std::vector<int> displs(size);
 
     for (int i = 0; i < size - 1; ++i) {
         sendcounts[i] = blockRows * cols;
