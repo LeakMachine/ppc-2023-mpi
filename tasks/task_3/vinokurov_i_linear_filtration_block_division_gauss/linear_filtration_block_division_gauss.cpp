@@ -90,7 +90,8 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
             finalOutput[i] = localOutput[i];
         }
         for (int i = 1; i < size; ++i) {
-            MPI_Recv(&finalOutput[i * blockRows][0], blockRows * cols, MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&finalOutput[i * blockRows][0], blockRows * cols, 
+                      MPI_UNSIGNED_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
     } else {
         MPI_Send(&localOutput[0][0], blockRows * cols, MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD);
