@@ -104,7 +104,16 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
 
     std::vector<unsigned char> flattenedImage = convertTo1D(image);
 
+    if (image.size() == 0) {
+        throw std::runtime_error("Cannot work with an empty image");
+    }
+
     int block_size = rows / size;
+
+    if (block_size == 0) {
+        throw std::runtime_error("Cannot work with wrong parameters");
+    }
+
     int block_start = rank * block_size;
     int block_end = (rank == size - 1) ? rows : block_start + block_size;
 

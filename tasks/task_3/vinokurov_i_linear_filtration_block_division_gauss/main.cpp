@@ -16,92 +16,112 @@ TEST(TESTS, CanUseFunctionTest) {
     };
 
     std::vector<std::vector<unsigned char>> result;
+
+    ASSERT_NO_THROW(result = applyFilterMPI(image));
+}
+
+TEST(TESTS, CanWork4x4Test) {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    std::vector<std::vector<unsigned char>> image = {
+        {100, 120, 130, 110},
+        {110, 115, 120, 125},
+        {90, 100, 110, 120},
+        {95, 105, 115, 125}
+    };
+
+    std::vector<std::vector<unsigned char>> result;
     std::vector<std::vector<unsigned char>> result2;
 
-    ASSERT_NO_THROW(result = applyFilter(image));
-    for (const auto& row : result) {
-        for (const auto& pixel : row) {
-            std::cout << static_cast<int>(pixel) << " ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    ASSERT_NO_THROW(result2 = applyFilterMPI(image));
-    for (const auto& row : result2) {
-        for (const auto& pixel : row) {
-            std::cout << static_cast<int>(pixel) << " ";
-        }
-        std::cout << std::endl;
-    }
+    result = applyFilter(image);
+    result2 = applyFilterMPI(image);
+
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_NEAR(result[i][j], result2[i][j], 30);
+            ASSERT_NEAR(result[i][j], result2[i][j], 15);
         }
     }
 }
 
-TEST(TESTS, CanUseFunctionTest2) {
+TEST(TESTS, CanWork8x8Test) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125}
+        {100, 120, 130, 110, 100, 120, 130, 110},
+        {110, 115, 120, 125, 110, 115, 120, 125},
+        {90, 100, 110,  120, 95, 105, 115, 125},
+        {95, 105, 115, 125, 110, 115, 120, 125},
+        {100, 120, 130, 110, 110, 115, 120, 125},
+        {110, 115, 120, 125, 110, 115, 120, 125},
+        {90, 100, 110, 120, 100, 120, 130, 110},
+        {95, 105, 115, 125, 110, 115, 120, 125}
     };
 
     std::vector<std::vector<unsigned char>> result;
+    std::vector<std::vector<unsigned char>> result2;
 
-    ASSERT_NO_THROW(result = applyFilterMPI(image));
+    result = applyFilter(image);
+    result2 = applyFilterMPI(image);
+
+    for (int i = 0; i < image.size(); i++) {
+        for (int j = 0; j < image[0].size(); j++) {
+            ASSERT_NEAR(result[i][j], result2[i][j], 15);
+        }
+    }
 }
 
-TEST(TESTS, CanUseFunctionTest3) {
+TEST(TESTS, CanWork8x12Test) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125}
+        {100, 120, 130, 110, 100, 120, 130, 110, 110, 115, 120, 125},
+        {110, 115, 120, 125, 110, 115, 120, 125, 100, 120, 130, 110,},
+        {90, 100, 110,  120, 95, 105, 115, 125, 90, 100, 110,  120},
+        {95, 105, 115, 125, 110, 115, 120, 125, 100, 110, 120, 100},
+        {100, 120, 130, 110, 110, 115, 120, 125, 100, 120, 130, 110},
+        {110, 115, 120, 125, 110, 115, 120, 125, 115, 125, 110, 115,},
+        {90, 100, 110, 120, 100, 120, 130, 110, 100, 120, 130, 110},
+        {95, 105, 115, 125, 110, 115, 120, 125, 115, 125, 110, 115,}
     };
 
     std::vector<std::vector<unsigned char>> result;
+    std::vector<std::vector<unsigned char>> result2;
 
-    ASSERT_NO_THROW(result = applyFilterMPI(image));
+    result = applyFilter(image);
+    result2 = applyFilterMPI(image);
+
+    for (int i = 0; i < image.size(); i++) {
+        for (int j = 0; j < image[0].size(); j++) {
+            ASSERT_NEAR(result[i][j], result2[i][j], 15);
+        }
+    }
 }
 
-TEST(TESTS, CanUseFunctionTest4) {
+TEST(TESTS, CannotWorkWithEmptyTest) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125}
-    };
+    std::vector<std::vector<unsigned char>> image;
 
     std::vector<std::vector<unsigned char>> result;
 
-    ASSERT_NO_THROW(result = applyFilterMPI(image));
+    ASSERT_ANY_THROW(result = applyFilterMPI(image));
 }
 
-TEST(TESTS, CanUseFunctionTest5) {
+TEST(TESTS, CannotWorkInWrongFormatTest) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::vector<std::vector<unsigned char>> image = {
-        {100, 120, 130, 110},
-        {110, 115, 120, 125},
-        {90, 100, 110, 120},
-        {95, 105, 115, 125}
+        {100}
     };
 
     std::vector<std::vector<unsigned char>> result;
 
-    ASSERT_NO_THROW(result = applyFilterMPI(image));
+    ASSERT_ANY_THROW(result = applyFilterMPI(image));
 }
 
 int main(int argc, char** argv) {
