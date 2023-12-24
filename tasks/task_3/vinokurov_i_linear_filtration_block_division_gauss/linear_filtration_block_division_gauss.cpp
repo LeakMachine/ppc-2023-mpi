@@ -85,7 +85,8 @@ std::vector<unsigned char> convertTo1D(const std::vector<std::vector<unsigned ch
     return flattenedImage;
 }
 
-std::vector<std::vector<unsigned char>> convertTo2D(const std::vector<unsigned char>& flattenedImage, int rows, int cols) {
+std::vector<std::vector<unsigned char>> convertTo2D(const std::vector<unsigned char>& flattenedImage, 
+                                        int rows, int cols) {
     std::vector<std::vector<unsigned char>> image;
     for (int i = 0; i < rows; ++i) {
         image.emplace_back(flattenedImage.begin() + i * cols, flattenedImage.begin() + (i + 1) * cols);
