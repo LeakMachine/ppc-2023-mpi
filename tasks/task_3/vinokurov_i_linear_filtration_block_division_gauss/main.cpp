@@ -39,7 +39,7 @@ TEST(TESTS, CanWork4x4Test) {
 
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_EQ(result[i][j], result2[i][j], 0);
+            ASSERT_EQ(result[i][j], result2[i][j]);
         }
     }
 }
@@ -67,7 +67,7 @@ TEST(TESTS, CanWork8x10Test) {
 
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_EQ(result[i][j], result2[i][j], 0);
+            ASSERT_EQ(result[i][j], result2[i][j]);
         }
     }
 }
@@ -95,7 +95,7 @@ TEST(TESTS, CanWork8x4Test) {
 
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_EQ(result[i][j], result2[i][j], 0);
+            ASSERT_EQ(result[i][j], result2[i][j]);
         }
     }
 }
@@ -119,7 +119,7 @@ TEST(TESTS, CanWorkPitchBlackTest) {
 
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_EQ(result[i][j], result2[i][j], 0);
+            ASSERT_EQ(result[i][j], result2[i][j]);
         }
     }
 }
@@ -143,7 +143,7 @@ TEST(TESTS, CanWorkWhiteTest) {
 
     for (int i = 0; i < image.size(); i++) {
         for (int j = 0; j < image[0].size(); j++) {
-            ASSERT_EQ(result[i][j], result2[i][j], 0);
+            ASSERT_EQ(result[i][j], result2[i][j]);
         }
     }
 }
