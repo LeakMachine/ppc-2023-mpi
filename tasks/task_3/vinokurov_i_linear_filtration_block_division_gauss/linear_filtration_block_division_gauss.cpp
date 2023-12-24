@@ -104,7 +104,7 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
 
     std::vector<unsigned char> flattenedImage = convertTo1D(image);
 
-    if (image.size() == 0) {
+    if (image.empty()) {
         throw std::runtime_error("Cannot work with an empty image");
     }
 
