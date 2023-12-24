@@ -95,14 +95,10 @@ std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::ve
 
     for (int i = 0; i < size - 1; ++i) {
         sendcounts[i] = blockRows * cols;
+        displs[i] = i * blockRows * cols;
     }
-    sendcounts[size - 1] = (rows - blockRows * (size - 1)) * cols;
-
-    int displacement = 0;
-    for (int i = 0; i < size; ++i) {
-        displs[i] = displacement;
-        displacement += sendcounts[i];
-    }
+    sendcounts[size - 1] = (rows - (size - 1) * blockRows) * cols;
+    displs[size - 1] = (size - 1) * blockRows * cols;
 
     std::vector<unsigned char> all_pixels(rows * cols);
     MPI_Gatherv(&flattenLocalOutput[0], flattenLocalOutput.size(), MPI_UNSIGNED_CHAR,
