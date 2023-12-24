@@ -6,7 +6,7 @@
 #include <cmath>
 #include "task_3/vinokurov_i_linear_filtration_block_division_gauss/linear_filtration_block_division_gauss.h"
 
-int funcClamp(int _min, int _max, int _input) {
+int funcClamp(int _max, int _min, int _input) {
     if (_input < _min) {
         return 0;
     } else if (_input > _max) {
@@ -16,69 +16,85 @@ int funcClamp(int _min, int _max, int _input) {
     }
 }
 
-void applyGaussianFilter(const std::vector<std::vector<int>>& _input, std::vector<std::vector<int>> _output) {
-    float kernel[3][3] = {
-        {0.0625, 0.125, 0.0625},
-        {0.125, 0.25, 0.125},
-        {0.0625, 0.125, 0.0625}
-    };
+float kernel[3][3] = {
+    {1.0f / 16, 2.0f / 16, 1.0f / 16},
+    {2.0f / 16, 4.0f / 16, 2.0f / 16},
+    {1.0f / 16, 2.0f / 16, 1.0f / 16}
+};
 
-    int rows = _input.size();
-    int cols = _input[0].size();
+unsigned char funcProcessPixel(int _x, int _y, const std::vector<std::vector<unsigned char>>& _image) {
 
-    for (int i = 1; i < rows - 1; ++i) {
-        for (int j = 1; j < cols - 1; ++j) {
-            float sum = 0.0f;
-            for (int k = -1; k <= 1; ++k) {
-                for (int l = -1; l <= 1; ++l) {
-                    sum += _input[i + k][j + l] * kernel[k + 1][l + 1];
-                }
-            }
-            _output[i][j] = funcClamp(0, 255, static_cast<int>(sum));
+    int radiusX = 1;
+    int radiusY = 1;
+    float result = 0;
+
+    int rows = _image.size();
+    int cols = _image[0].size();
+    unsigned char neighborColor;
+
+    for (int l = -radiusY; l <= radiusY; l++)
+    {
+        for (int k = -radiusX; k <= radiusX; k++)
+        {
+            int idX = funcClamp(_x + k, 0, rows - 1);
+            int idY = funcClamp(_y + l, 0, cols - 1);
+            neighborColor = _image[idX][idY];
+            result += neighborColor * kernel[k + radiusX][l + radiusY];
         }
     }
+    return static_cast<unsigned char>(result);
 }
 
-std::vector<std::vector<int>> applyFilterMPI(const std::vector<std::vector<int>>& _image) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+std::vector<std::vector<unsigned char>> applyFilter(const std::vector<std::vector<unsigned char>>& _image) {
 
     int rows = _image.size();
     int cols = _image[0].size();
 
-    std::vector<std::vector<int>> tempImage = _image;
+    std::vector<std::vector<unsigned char>> temp(rows, std::vector<unsigned char>(cols));
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            temp[i][j] = funcProcessPixel(i + 1, j + 1, _image);
+        }
+    }
+
+    return std::vector<std::vector<unsigned char>>(temp);
+}
+
+std::vector<std::vector<unsigned char>> applyFilterMPI(const std::vector<std::vector<unsigned char>>& _image) {
+    int rank, size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int rows = _image.size();
+    int cols = _image[0].size();
 
     int blockRows = rows / size;
     int blockStart = rank * blockRows;
     int blockEnd = (rank == size - 1) ? rows : blockStart + blockRows;
 
-    std::vector<std::vector<int>> localImage(blockEnd - blockStart, std::vector<int>(cols));
-    std::vector<std::vector<int>> localOutput(blockEnd - blockStart, std::vector<int>(cols));
+    std::vector<std::vector<unsigned char>> localImage(blockEnd - blockStart, std::vector<unsigned char>(cols));
+    std::vector<std::vector<unsigned char>> localOutput(blockEnd - blockStart, std::vector<unsigned char>(cols));
 
-    if (rank != 0) {
-        MPI_Send(&tempImage[blockStart - 1][0], (blockRows + 2) * cols, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    } else {
-        for (int i = 1; i < size; ++i) {
-            MPI_Recv(&localImage[0][0], (blockRows + 2) * cols, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            applyGaussianFilter(localImage, localOutput);
-            MPI_Send(&localOutput[0][0], blockRows * cols, MPI_INT, i, 1, MPI_COMM_WORLD);
+    for (int i = blockStart; i < blockEnd; i++) {
+        for (int j = 0; j < cols; j++) {
+            localImage[i][j] = _image[i][j];
         }
     }
 
-    if (rank == 0) {
-        applyGaussianFilter(tempImage, localOutput);
-    } else {
-        MPI_Recv(&localOutput[0][0], blockRows * cols, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-
-    if (rank != 0) {
-        MPI_Send(&localOutput[0][0], blockRows * cols, MPI_INT, 0, 1, MPI_COMM_WORLD);
-    } else {
-        for (int i = 1; i < size; ++i) {
-            MPI_Recv(&tempImage[i * blockRows][0], blockRows * cols, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    for (int i = 0; i < blockEnd - blockStart; i++) {
+        for (int j = 0; j < cols; j++) {
+            localOutput[i][j] = funcProcessPixel(i + 1, j + 1, localImage);
         }
     }
 
-    return tempImage;
+    if (rank == 0 && size == 1) {
+        return localOutput;
+    }
+
+    std::vector<std::vector<unsigned char>> localOutput2(rows, std::vector<unsigned char>(cols));
+    MPI_Allgather(&localOutput[0][0], (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR,
+        &localOutput2[0][0], (blockEnd - blockStart) * cols, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
+
+    return localOutput2;
 }
